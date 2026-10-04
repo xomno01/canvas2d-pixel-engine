@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Pixel Game Starter</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #0d0a14;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    canvas#game {
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    /* Touch control overlay layer */
+    #touch-layer {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      display: none;
+      justify-content: space-between;
+      padding: 16px;
+      pointer-events: none;
+    }
+    body.touch #touch-layer { display: flex; }
+    .btn {
+      pointer-events: auto;
+      width: 60px;
+      height: 60px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid #1b1424;
+      color: #fff;
+      font: 700 20px system-ui, sans-serif;
+    }
+    .btn:active { background: rgba(255, 255, 255, 0.4); transform: translateY(2px); }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="touch-layer">
+    <div>
+      <button class="btn" data-key="left">◀</button>
+      <button class="btn" data-key="right">▶</button>
+    </div>
+    <div>
+      <button class="btn" data-key="action">●</button>
+    </div>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>

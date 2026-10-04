@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Char Matrix Pixel Art Designer</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #161224; color: #fff; margin: 0; padding: 20px; display: flex; gap: 20px; }
+    .editor { display: flex; flex-direction: column; gap: 10px; }
+    #grid { display: grid; gap: 1px; background: #262038; border: 2px solid #363050; width: fit-content; }
+    .cell { width: 20px; height: 20px; background: #1b162b; cursor: pointer; }
+    .cell:hover { outline: 1px solid #fff; }
+    .panel { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+    textarea { width: 100%; height: 260px; background: #0e0b17; color: #62ecb0; font-family: monospace; padding: 10px; border: 1px solid #363050; border-radius: 6px; }
+    .colors { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .swatch { width: 28px; height: 28px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; }
+    .swatch.selected { border-color: #fff; transform: scale(1.1); }
+    button { padding: 8px 16px; background: #2f7bff; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    button:hover { background: #4d91ff; }
+  </style>
+</head>
+<body>
+  <div class="editor">
+    <h3>Pixel Canvas (16x16)</h3>
+    <div class="colors" id="colors"></div>
+    <div id="grid"></div>
+    <div>
+      <button onclick="clearGrid()">Clear Grid</button>
+      <button onclick="generateCode()">Generate Code</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Generated Character Matrix Code</h3>
+    <textarea id="output" readonly></textarea>
+  </div>
+
+  <script>
+    const W = 16, H = 16;
+    const PALETTE = {
+      '.': 'transparent',
+      'k': '#1b1424',
+      'r': '#e83b3b',
+      'l': '#ff8f7a',
+      'b': '#3b7ae8',
+      'g': '#3bc45a',
+      'y': '#ffd23a',
+      'w': '#ffffff',
+      'd': '#5a5a68'
+    };
+
+    let selectedChar = 'k';
+    const gridData = Array(H).fill().map(() => Array(W).fill('.'));
+
+    // Setup colors
+    const colorsDiv = document.getElementById('colors');
+    for (const [ch, col] of Object.entries(PALETTE)) {
+      const b = document.createElement('div');
+      b.className = 'swatch' + (ch === selectedChar ? ' selected' : '');
+      b.style.background = col === 'transparent' ? 'repeating-conic-gradient(#555 0% 25%, #333 0% 50%) 50% / 8px 8px' : col;
+      b.title = `${ch} (${col})`;
+      b.onclick = () => {
+        selectedChar = ch;
+        document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+        b.classList.add('selected');
+      };
+      colorsDiv.appendChild(b);
+    }
+
+    // Setup grid
+    const grid = document.getElementById('grid');
+    grid.style.gridTemplateColumns = `repeat(${W}, 20px)`;
+    let isDrawing = false;
+    window.onmousedown = () => isDrawing = true;
+    window.onmouseup = () => isDrawing = false;
+
+    function renderCell(el, x, y) {
+      const ch = gridData[y][x];
+      const col = PALETTE[ch];
+      el.style.background = col === 'transparent' ? '#1b162b' : col;
+    }
+
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const c = document.createElement('div');
+        c.className = 'cell';
+        const paint = () => {
+          gridData[y][x] = selectedChar;
+          renderCell(c, x, y);
+          generateCode();
+        };
+        c.onmousedown = paint;
+        c.onmouseover = () => { if (isDrawing) paint(); };
+        grid.appendChild(c);
+      }
+    }
+
+    function clearGrid() {
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) gridData[y][x] = '.';
+      document.querySelectorAll('.cell').forEach((c, i) => {
+        const y = Math.floor(i / W), x = i % W;
+        renderCell(c, x, y);
+      });
+      generateCode();
+    }
+
+    function generateCode() {
+      const usedChars = new Set();
+      const rows = gridData.map(r => {
+        r.forEach(ch => { if (ch !== '.') usedChars.add(ch); });
+        return `      '${r.join('')}'`;
+      });
+      
+      const palEntries = Array.from(usedChars).map(ch => `${ch}: '${PALETTE[ch]}'`).join(', ');
+      const code = `const MY_SPRITE = {\n  p: { ${palEntries} },\n  m: [\n${rows.join(',\n')}\n  ]\n};`;
+      document.getElementById('output').value = code;
+    }
+    generateCode();
+  </script>
+</body>
+</html>

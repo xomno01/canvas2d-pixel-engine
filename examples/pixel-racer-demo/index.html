@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Đua Xe Pixel</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0d0a14; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+    canvas { display: block; image-rendering: pixelated; }
+    /* Nút cảm ứng: lớp DOM nằm đè lên canvas (giống HUD của Tiệm Nét Cỏ) */
+    #touch { position: fixed; left: 0; right: 0; bottom: 0; display: none; justify-content: space-between; padding: 14px; pointer-events: none; }
+    body.touch #touch { display: flex; }
+    .tb { pointer-events: auto; width: 66px; height: 66px; margin: 0 5px; border-radius: 16px; border: 3px solid #1b1424; background: rgba(255,255,255,.2); color: #fff; font: 800 22px system-ui, sans-serif; box-shadow: 0 5px 0 #1b1424; touch-action: none; }
+    .tb.on { background: rgba(255,255,255,.45); transform: translateY(3px); box-shadow: 0 2px 0 #1b1424; }
+    #bn { background: rgba(47,123,255,.55); font-size: 16px; }
+    #pauseBtn { position: fixed; top: 10px; right: 10px; width: 44px; height: 44px; display: none; border-radius: 12px; border: 3px solid #1b1424; background: rgba(255,255,255,.2); color: #fff; font: 800 16px system-ui; }
+    body.touch #pauseBtn { display: block; }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="touch">
+    <div><button class="tb" data-k="left">◀</button><button class="tb" data-k="right">▶</button></div>
+    <div><button class="tb" data-k="brake">▼</button><button class="tb" id="bn" data-k="nitro">N₂O</button></div>
+  </div>
+  <button id="pauseBtn">II</button>
+  <script src="game.js"></script>
+</body>
+</html>
