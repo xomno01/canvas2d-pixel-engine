@@ -982,6 +982,20 @@ class PixelKingdomWars {
       Math.floor(W * this.cssScale * this.dpr),
       Math.floor(H * this.cssScale * this.dpr)
     );
+
+    // Gợi ý xoay ngang màn hình nếu đang cầm dọc điện thoại
+    if (window.innerWidth < window.innerHeight) {
+      const hintY = Math.max(12 * this.dpr, Math.floor(this.cssOffsetY * this.dpr) - 24 * this.dpr);
+      drawText(
+        this.ctx,
+        'XOAY NGANG MAN HINH DE CHOI TO DEP',
+        this.canvas.width / 2,
+        hintY,
+        '#ffd438',
+        Math.max(1, Math.round(this.dpr)),
+        'c'
+      );
+    }
   }
 
   drawCastleFortresses(ctx) {
