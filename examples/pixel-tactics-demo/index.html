@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Pixel Kingdom Tactics - Dàn Trận Công Thành</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #0d0a14;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    canvas#game {
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    /* UI Thanh Điều Khiển Chiến Thuật Nằm Trên Canvas */
+    #hud-top {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 14px;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(13,10,20,0.85) 0%, rgba(13,10,20,0) 100%);
+      color: #fff;
+    }
+    .hud-box {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .resource-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(27,20,36,0.85);
+      border: 2px solid #3e3250;
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .badge-gold { color: #ffd23a; }
+    .badge-mana { color: #5fcde4; }
+
+    #hud-bottom {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: linear-gradient(0deg, rgba(13,10,20,0.95) 0%, rgba(13,10,20,0.7) 80%, rgba(13,10,20,0) 100%);
+      pointer-events: none;
+    }
+
+    .lane-selector {
+      pointer-events: auto;
+      display: flex;
+      gap: 6px;
+      background: rgba(22, 18, 32, 0.9);
+      padding: 3px;
+      border-radius: 10px;
+      border: 2px solid #2f2540;
+    }
+    .lane-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid transparent;
+      color: #a09ab0;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .lane-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    .lane-btn.active {
+      background: #2f7bff;
+      border-color: #7ab0ff;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(47,123,255,0.5);
+    }
+
+    .tactical-cards {
+      pointer-events: auto;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      max-width: 100%;
+      padding-bottom: 2px;
+    }
+    .card-btn {
+      position: relative;
+      width: 54px;
+      height: 64px;
+      border-radius: 8px;
+      background: #1c162a;
+      border: 2px solid #362d4a;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 2px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #120e1c;
+      transition: transform 0.1s, border-color 0.15s;
+    }
+    .card-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #120e1c;
+    }
+    .card-btn:hover { border-color: #6a5a8a; }
+    .card-btn.spell { background: #162438; border-color: #2a4870; }
+    .card-btn.spell:hover { border-color: #4a80c0; }
+    .card-btn.disabled {
+      opacity: 0.45;
+      filter: grayscale(0.8);
+      cursor: not-allowed;
+    }
+    .card-key {
+      font-size: 9px;
+      font-weight: 800;
+      color: #8a829e;
+      background: rgba(0,0,0,0.3);
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+    .card-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+    .card-cost {
+      font-size: 10px;
+      font-weight: 800;
+      color: #ffd23a;
+    }
+    .card-cost.mana { color: #5fcde4; }
+
+    .cooldown-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.65);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: #fff;
+      pointer-events: none;
+    }
+
+    #speed-btn, #sound-btn {
+      pointer-events: auto;
+      background: rgba(27,20,36,0.85);
+      border: 2px solid #3e3250;
+      color: #fff;
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- HUD trên: Máu 2 thành, Vàng, Mana, Nút chức năng -->
+  <div id="hud-top">
+    <div class="hud-box">
+      <div class="resource-badge badge-gold">
+        <span>🪙</span><span id="gold-val">100</span>
+      </div>
+      <div class="resource-badge badge-mana">
+        <span>💧</span><span id="mana-val">50</span>
+      </div>
+    </div>
+    <div class="hud-box">
+      <button id="speed-btn">1X</button>
+      <button id="sound-btn">🔊 BẬT</button>
+    </div>
+  </div>
+
+  <!-- HUD dưới: Bộ chọn làn & Các thẻ điều quân / Kỹ năng -->
+  <div id="hud-bottom">
+    <div class="lane-selector">
+      <button class="lane-btn" data-lane="0">1. LÀN TRÊN</button>
+      <button class="lane-btn active" data-lane="1">2. LÀN GIỮA</button>
+      <button class="lane-btn" data-lane="2">3. LÀN DƯỚI</button>
+    </div>
+
+    <div class="tactical-cards">
+      <!-- 6 Binh chủng -->
+      <button class="card-btn" data-unit="miner" title="Thợ mỏ: Khai thác vàng liên tục">
+        <span class="card-key">4</span>
+        <span class="card-icon">⛏️</span>
+        <span class="card-cost">40g</span>
+      </button>
+      <button class="card-btn" data-unit="swordsman" title="Kiếm sĩ: Tiền tuyến cân bằng">
+        <span class="card-key">5</span>
+        <span class="card-icon">⚔️</span>
+        <span class="card-cost">50g</span>
+      </button>
+      <button class="card-btn" data-unit="archer" title="Cung thủ: Bắn xa liên hoàn">
+        <span class="card-key">6</span>
+        <span class="card-icon">🏹</span>
+        <span class="card-cost">80g</span>
+      </button>
+      <button class="card-btn" data-unit="shieldbearer" title="Hộ vệ: Khiên dày chống tên">
+        <span class="card-key">7</span>
+        <span class="card-icon">🛡️</span>
+        <span class="card-cost">110g</span>
+      </button>
+      <button class="card-btn" data-unit="cavalry" title="Kỵ binh: Xung kích cực nhanh">
+        <span class="card-key">8</span>
+        <span class="card-icon">🐎</span>
+        <span class="card-cost">150g</span>
+      </button>
+      <button class="card-btn" data-unit="mage" title="Pháp sư: Cầu lửa sát thương diện rộng">
+        <span class="card-key">9</span>
+        <span class="card-icon">🔮</span>
+        <span class="card-cost">180g</span>
+      </button>
+
+      <!-- 3 Phép thuật chỉ huy -->
+      <button class="card-btn spell" data-spell="arrow_rain" title="Mưa tên: Quét sạch lính mỏng">
+        <span class="card-key">Q</span>
+        <span class="card-icon">🌧️</span>
+        <span class="card-cost mana">40m</span>
+      </button>
+      <button class="card-btn spell" data-spell="thunder" title="Thiên lôi: Sấm sét sát thương cực khủng">
+        <span class="card-key">W</span>
+        <span class="card-icon">⚡</span>
+        <span class="card-cost mana">70m</span>
+      </button>
+      <button class="card-btn spell" data-spell="heal" title="Chiến hồi: Hồi máu toàn làn">
+        <span class="card-key">E</span>
+        <span class="card-icon">💚</span>
+        <span class="card-cost mana">50m</span>
+      </button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
