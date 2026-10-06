@@ -1,24 +1,26 @@
 'use strict';
 /* =====================================================================
- *  PIXEL KINGDOM: TOTAL WAR - ĐẠI CHIẾN VƯƠNG QUỐC PIXEL
- *  Đồ họa thuần Canvas 2D Retro (Kỹ thuật từ Canvas 2D Pixel Engine)
- *  - Virtual Framebuffer: 320 x 180 (Widescreen 16:9)
- *  - 100% Canvas, Zero external dependencies
- *  - 3 Làn chiến thuật, Khai thác mỏ vàng, 7 Binh chủng, 3 Phép thần thánh
+ *  PIXEL KINGDOM: TOTAL WAR - PHIÊN BẢN ĐỒ HỌA SIÊU PHẨM (HD RETRO MASTERPIECE)
+ *  - 100% Canvas 2D thuần túy, Virtual buffer: 320 x 180 (16:9 Widescreen)
+ *  - Thiết kế Sprite chuẩn Chibi 16-bit (Final Fantasy Tactics / Kingdom Rush)
+ *  - Chiến trường mở tự nhiên: Thung lũng cỏ xanh, rặng đá, sông nước uốn lượn
+ *  - Lâu đài thành quách đồ sộ có lính canh nỏ đứng trên chòi
+ *  - Dynamic Lighting với quầng sáng tỏa ấm áp từ đuốc và phép thuật
+ *  - Giao diện HUD Fantasy RPG mạ vàng rực rỡ, thẻ bài phân loại màu sắc
  * ===================================================================== */
 
 // ---------- 1. CẤU HÌNH & HẰNG SỐ TOÀN CỤC ----------
 const W = 320, H = 180;
-const BATTLE_TOP = 22;
-const BATTLE_BOT = 142;
-const HUD_TOP = 142;
-const LANES_Y = [50, 82, 114];
+const BATTLE_TOP = 20;
+const BATTLE_BOT = 138;
+const HUD_TOP = 138;
+const LANES_Y = [48, 80, 112];
 const LANE_NAMES = ['TOP', 'MID', 'BOT'];
 
 const HUD_SLOT_W = 24;
-const HUD_UNIT_START_X = 64;
-const HUD_SPELL_START_X = 244;
-const HUD_SPELL_SLOT_W = 23;
+const HUD_UNIT_START_X = 66;
+const HUD_SPELL_START_X = 246;
+const HUD_SPELL_SLOT_W = 22;
 
 // ---------- 2. HÀM TOÁN HỌC & TIỆN ÍCH ----------
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -29,7 +31,7 @@ function rng(seed) { return () => { seed = (seed * 1664525 + 1013904223) >>> 0; 
 function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 function px(ctx, x, y, w, h, col) { ctx.fillStyle = col; ctx.fillRect(x, y, w, h); }
 
-// ---------- 3. PIXEL FONT 3x5 CHUẨN RETRO ----------
+// ---------- 3. BỘ FONT PIXEL 3x5 CHUẨN RETRO ----------
 const FONT_DATA = {
   A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110', E: '111100110100111',
   F: '111100110100100', G: '011100101101011', H: '101101111101101', I: '111010010010111', J: '001001001101010',
@@ -69,134 +71,152 @@ function drawPixelText(ctx, textStr, x, y, col = '#ffffff', sc = 1, align = 'l',
   ctx.drawImage(cvs, Math.round(drawX), Math.round(y));
 }
 
-// ---------- 4. SPRITES PIXEL ART CHI TIẾT (CHARACTER-MATRIX) ----------
-const OUTLINE = '#110c1c';
+// ---------- 4. SPRITES CHI TIẾT CHUẨN CHIBI RETRO (16x16 / 24x18) ----------
+const OUTLINE = '#08060f';
 const PALETTES = {
-  player: { m: '#3a76e8', d: '#1e4896', l: '#8ab4ff', t: '#ffd438' }, // Hoàng Gia Xanh
-  enemy:  { m: '#e03a3a', d: '#8a1818', l: '#ff8585', t: '#ffffff' }  // Đế Chế Đỏ
+  player: { m: '#2e86de', d: '#12549e', l: '#8ec5fc', t: '#f1c40f' }, // Hoàng Gia Xanh
+  enemy:  { m: '#ee5253', d: '#a51c1d', l: '#ff9aa2', t: '#ffffff' }  // Đế Chế Đỏ
 };
 
 const SPRITE_MATRICES = {
-  // 1. Thợ mỏ (12x14)
+  // 1. Thợ mỏ (Miner 14x16): Mũ bảo hộ vàng có đèn pha phát sáng, áo yếm, vác cuốc sắt
   miner: [
-    '...kyyyyk...',
-    '..kyyyyyyk..',
-    '..kywhhwyk..',
-    '..kssssssk..',
-    '..kmmddmmk.b',
-    '.kmmmmmmmmkbb',
-    'k.kmmmmmmk.b',
-    '..kddddddk..',
-    '..kbbbbbbk..',
-    '..kssssssk..',
-    '..kd....dk..',
-    '..kd....dk..',
-    '.kk......kk.'
+    '....kkkkkk....',
+    '...kyyyyyyk...',
+    '..kyywwyyyyk..',
+    '..kywhhhwyk...',
+    '..ksssssssk.k.',
+    '..ksshhhhsk.kk',
+    '..ksssssssk.k.',
+    '.kmmddddmmkkk.',
+    'kmmmmmmmmmmkbk',
+    'kmmmmmmmmmmkbk',
+    '.kddddddddkkk.',
+    '..kbbbbbbk....',
+    '..kssssssk....',
+    '..kd....dk....',
+    '..kd....dk....',
+    '.kk......kk...'
   ],
-  // 2. Kiếm sĩ (12x14)
+  // 2. Kiếm sĩ Hoàng Gia (Swordsman 15x17): Mũ chiến binh Great Helm, lông vũ đỉnh mũ, khiên huy hiệu, kiếm sáng
   swordsman: [
-    '....kkkk....',
-    '...kssssk...',
-    '..kssssssk..',
-    '..kshsshsk..',
-    '..kssssssk..',
-    '..kmmddmmk..',
-    '.kmmmmmmmmk.',
-    'k.kmmmmmmk.k',
-    'l..kddddk..l',
-    'l..kssssk..l',
-    '...kllllk...',
-    '...kd..dk...',
-    '...kd..dk...',
-    '..kk....kk..'
+    '.....ktttk.....',
+    '....kssssk.....',
+    '...kssssssk....',
+    '..ksslllsssk...',
+    '..kshhhhhhsk...',
+    '..ksslllsssk...',
+    '.kmmddddmmk....',
+    'kmmmmmmmmmmk.l.',
+    'kmmmmmmmmmmklk.',
+    'k.kddddddk.klk.',
+    '..kssssssk.klk.',
+    '..kllllllk.klk.',
+    '..kdd..ddk.klk.',
+    '..kdd..ddk.kkk.',
+    '..kdd..ddk.....',
+    '..kd....dk.....',
+    '.kk......kk....'
   ],
-  // 3. Cung thủ (11x14)
+  // 3. Cung thủ Tinh Nhuệ (Archer 14x16): Mũ nón lông vũ, áo giáp da, cánh cung gỗ cong vút
   archer: [
-    '...kkkk....',
-    '..kggggk...',
-    '.kggggggk..',
-    '.kghsshhk..',
-    '.kggggggk..',
-    '..kmmddk...',
-    '.kmmmmmmkb.',
-    '.kmmmmmmk.b',
-    '..kddddk..b',
-    '..kssssk.b.',
-    '..kllllk...',
-    '..kd..dk...',
-    '..kd..dk...',
-    '.kk....kk..'
+    '....kttk......',
+    '...kggggk.k...',
+    '..kggggggkk...',
+    '..kghhhhsk....',
+    '..kssssssk.k..',
+    '..ksshhhhskkb.',
+    '.kmmddddk..kb.',
+    'kmmmmmmmmk..kb',
+    'kmmmmmmmmk..kb',
+    '.kddddddk...kb',
+    '..kbbbbk....kb',
+    '..kssssk....kb',
+    '..kd..dk....k.',
+    '..kd..dk......',
+    '..kd..dk......',
+    '.kk....kk.....'
   ],
-  // 4. Đại hộ vệ khiên sắt (14x14)
+  // 4. Đại Hộ Vệ Khiên Tháp (Tower Shield 16x17): Khiên Pavise khổng lồ bọc đồng hình chữ nhật che kín thân
   shield: [
-    '..kkkkkkk.....',
-    '.ksssssssk....',
-    '.kshsssshk....',
-    '.ksssssssk.kk.',
-    'kmmmmmmmmkkmmk',
-    'kmmmmmmmmkmmmk',
-    'kmmmmmmmmkmmmk',
-    'kddddddddkmmmk',
-    'kddddddddkmmmk',
-    'kddddddddkmmmk',
-    '.kd....dk.kkk.',
-    '.kd....dk.....',
-    '.kd....dk.....',
-    'kkk....kkk....'
+    '.kkkkkkkkkk.....',
+    'kssssssssssk....',
+    'kssttttttsssk...',
+    'kssshhhhhsssk.k.',
+    'ksssttttttssskkk',
+    'ksssssssssskkmmk',
+    'kddddddddddkmmmk',
+    'kddddddddddkmmmk',
+    'kddddddddddkmmmk',
+    'kddddddddddkmmmk',
+    'kddddddddddkmmmk',
+    'ksssssssssskkkk.',
+    'kddddddddddk....',
+    '.kd......dk.....',
+    '.kd......dk.....',
+    '.kd......dk.....',
+    'kkk......kkk....'
   ],
-  // 5. Kỵ binh thiết giáp (20x16)
+  // 5. Kỵ Binh Thiết Giáp (Cavalry 24x18): Ngựa chiến cơ bắp có yên bọc nhung, kỵ sĩ vung ngọn thương dài
   cavalry: [
-    '......kkkk..........',
-    '.....kssssk.........',
-    '....kshssssk........',
-    '...kmmmmmmmmk.......',
-    '...kmmmmmmmmk.......',
-    '...kddddddddk...kkk.',
-    '...kbbbbbbbbkkkkbbbk',
-    '..kbbbbbbbbbbbbbbbbk',
-    '.kbbbbbbbbbbbbbbbbbk',
-    '.kbbbbbbbbbbbbbbbbbk',
-    '.kbbbbbbbbbbbbbbbbbk',
-    '..kbbbbbbbbbbbbbbbk.',
-    '..kd..dk....kd..dk..',
-    '..kd..dk....kd..dk..',
-    '..kd..dk....kd..dk..',
-    '.kk....kk..kk....kk.'
+    '.......kkkk.............',
+    '......kssssk............',
+    '.....kshhhhsk...........',
+    '....kmmmmmmmmk..........',
+    '....kmmmmmmmmk..........',
+    '....kddddddddk.....kkk..',
+    '....kbbbbbbbbkkkkkkbbbk.',
+    '...kbbbbbbbbbbbbbbbbbbbk',
+    '..kbbbbbbbbbbbbbbbbbbbbk',
+    '.kbbkddddddddddddkbbbbbk',
+    '.kbbkmmmmmmmmmmmmkbbbbbk',
+    '.kbbkmmmmmmmmmmmmkbbbbbk',
+    '..kbbbbbbbbbbbbbbbbbbbk.',
+    '..kbbbbbbbbbbbbbbbbbbk..',
+    '..kd..dk........kd..dk..',
+    '..kd..dk........kd..dk..',
+    '..kd..dk........kd..dk..',
+    '.kk....kk......kk....kk.'
   ],
-  // 6. Pháp sư hỏa ngục (12x15)
+  // 6. Pháp Sư Hỏa Ngục (Pyromancer 15x17): Mũ chóp nạm sao vàng, trượng ma thuật gắn đá hồng ngọc rực lửa
   mage: [
-    '....kkk.....',
-    '...kpppk....',
-    '..kpppppk...',
-    '..kphsshpk..',
-    '..kssssssk..',
-    '.kmmmmmmmmky',
-    'kmmmmmmmmmmk',
-    'kmmmmmmmmmmk',
-    '.kmmmmmmmmk.',
-    '.kmmmmmmmmk.',
-    '..kddddddk..',
-    '..kddddddk..',
-    '..kddddddk..',
-    '...kd..dk...',
-    '..kk....kk..'
+    '.....kkkk......',
+    '....kppppk.....',
+    '...kppttppk....',
+    '..kpppppppk....',
+    '..kphhhhhpk....',
+    '..ksssssssk..ky',
+    '.kmmmmmmmmkkkmy',
+    'kmmmmmmmmmmkkmy',
+    'kmmmmmmmmmmk.ky',
+    '.kmmmmmmmmk..k.',
+    '.kmmmmmmmmk..k.',
+    '..kddddddk...k.',
+    '..kddddddk...k.',
+    '..kd....dk...k.',
+    '..kd....dk...k.',
+    '..kd....dk...k.',
+    '.kk......kk.kk.'
   ],
-  // 7. Máy bắn đá (18x14)
+  // 7. Máy Bắn Đá Công Thành (Catapult 24x17): Cỗ xe gỗ thông cổ thụ, bánh xe bọc nan sắt, đạn đá bốc lửa
   catapult: [
-    '......kkkkk.......',
-    '.....ksssssk......',
-    '....ksssssssk.....',
-    '...kwwwwwwwwwk....',
-    '...kwwwwwwwwwk....',
-    '..kwwwwwwwwwwwk...',
-    '.kwwwwwwwwwwwwwk..',
-    '.kwwwwwwwwwwwwwk..',
-    'kkdddddddddddddkkk',
-    'kddddddddddddddddk',
-    'kddkkddddddddkkddk',
-    '.kkwwkkkkkkkkwwkk.',
-    '.kkwwkkkkkkkkwwkk.',
-    '..kkkk......kkkk..'
+    '.........kkkkkk.........',
+    '........ksssssssk.......',
+    '.......ksssssssssk......',
+    '......kwwwwwwwwwwwk.....',
+    '.....kwwwwwwwwwwwwwk....',
+    '....kwwwwwwwwwwwwwwwk...',
+    '...kwwwwwwwwwwwwwwwwwk..',
+    '..kwwwwwwwwwwwwwwwwwwwk.',
+    '.kwwwwwwwwwwwwwwwwwwwwwk',
+    'kkddddddddddddddddddddkk',
+    'kddddddddddddddddddddddk',
+    'kddkkddddddddddddddkkddk',
+    '.kkwkkkkkkkkkkkkkkwkk...',
+    '.kkwkwkwkkkkkwkwkwkwkk..',
+    '.kkwkwkwkkkkkwkwkwkwkk..',
+    '..kkwkkkkkkkkkkkwkk.....',
+    '...kkkk........kkkk.....'
   ]
 };
 
@@ -215,15 +235,16 @@ function getSprite(name, team = 'player', flipped = false) {
   const teamPal = PALETTES[team] || PALETTES.player;
   const colMap = {
     k: OUTLINE,
-    s: '#c8d6e5', // giáp sắt sáng
-    d: '#718093', // giáp sắt tối
-    l: '#f5f6fa', // viền kim loại sáng
-    h: '#1b1b24', // tóc/mắt
-    b: '#7a4f2d', // gỗ/ngựa nâu
-    w: '#4a2c11', // gỗ tối
-    g: '#2ed573', // áo cung thủ
-    p: '#8854d0', // áo pháp sư
-    y: '#fed330', // vàng mũ thợ mỏ
+    s: '#dfe6e9', // giáp sắt sáng
+    d: '#636e72', // giáp sắt bóng tối
+    l: '#ffffff', // highlight ánh kim lấp lánh
+    h: '#1e272e', // tóc / kính / mắt
+    b: '#8c5028', // gỗ / da nâu
+    w: '#4a2c11', // gỗ tối sẫm
+    g: '#10ac84', // áo cung thủ xanh lục bảo
+    p: '#5f27cd', // áo pháp sư tím huyền bí
+    y: '#fed330', // vàng kim
+    t: teamPal.t, // chi tiết điểm nhấn
     m: teamPal.m,
     D: teamPal.d,
     L: teamPal.l
@@ -243,7 +264,7 @@ function getSprite(name, team = 'player', flipped = false) {
   return cvs;
 }
 
-// ---------- 5. HỆ THỐNG ÂM THANH TỔNG HỢP (WEBAUDIO) ----------
+// ---------- 5. HỆ THỐNG ÂM THANH WEBAUDIO ----------
 const SoundFX = {
   ctx: null, muted: false,
   init() {
@@ -263,7 +284,7 @@ const SoundFX = {
     if (type === 'spawn') {
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(260, now);
-      osc.frequency.exponentialRampToValueAtTime(520, now + 0.1);
+      osc.frequency.exponentialRampToValueAtTime(540, now + 0.1);
       gain.gain.setValueAtTime(0.12, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
       osc.start(now); osc.stop(now + 0.11);
@@ -276,23 +297,23 @@ const SoundFX = {
       osc.start(now); osc.stop(now + 0.09);
     } else if (type === 'arrow') {
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(650, now);
-      osc.frequency.exponentialRampToValueAtTime(220, now + 0.07);
+      osc.frequency.setValueAtTime(700, now);
+      osc.frequency.exponentialRampToValueAtTime(240, now + 0.07);
       gain.gain.setValueAtTime(0.08, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
       osc.start(now); osc.stop(now + 0.08);
     } else if (type === 'magic') {
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(420, now);
-      osc.frequency.linearRampToValueAtTime(840, now + 0.22);
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.linearRampToValueAtTime(880, now + 0.22);
       gain.gain.setValueAtTime(0.12, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.24);
       osc.start(now); osc.stop(now + 0.25);
     } else if (type === 'boom') {
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(95, now);
+      osc.frequency.setValueAtTime(100, now);
       osc.frequency.exponentialRampToValueAtTime(20, now + 0.35);
-      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.setValueAtTime(0.28, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
       osc.start(now); osc.stop(now + 0.36);
     } else if (type === 'gold') {
@@ -316,111 +337,142 @@ const SoundFX = {
 
 // ---------- 6. THÔNG SỐ 7 BINH CHỦNG & 3 PHÉP THẦN THÁNH ----------
 const UNIT_DEFINITIONS = [
-  { id: 'miner',     name: 'THO MO',  cost: 35,  hp: 75,  dmg: 8,  spd: 24, range: 10, atkSpd: 1.2, isMiner: true },
-  { id: 'swordsman', name: 'KIEM SI', cost: 50,  hp: 140, dmg: 19, spd: 32, range: 12, atkSpd: 1.0 },
-  { id: 'archer',    name: 'CUNG THU',cost: 75,  hp: 70,  dmg: 15, spd: 30, range: 80, atkSpd: 1.2 },
-  { id: 'shield',    name: 'HO VE',  cost: 100, hp: 300, dmg: 11, spd: 22, range: 10, atkSpd: 1.4, isShield: true },
-  { id: 'cavalry',   name: 'KY BINH', cost: 160, hp: 210, dmg: 38, spd: 50, range: 14, atkSpd: 1.1 },
-  { id: 'mage',      name: 'PHAP SU',cost: 140, hp: 85,  dmg: 28, spd: 26, range: 68, atkSpd: 1.8, splash: 26 },
-  { id: 'catapult',  name: 'BAN DA',  cost: 220, hp: 180, dmg: 60, spd: 16, range: 105, atkSpd: 3.0, splash: 32 }
+  { id: 'miner',     name: 'THO MO',  cost: 35,  hp: 85,  dmg: 8,  spd: 24, range: 10, atkSpd: 1.2, isMiner: true, badgeCol: '#f39c12' },
+  { id: 'swordsman', name: 'KIEM SI', cost: 50,  hp: 150, dmg: 22, spd: 32, range: 12, atkSpd: 1.0, badgeCol: '#3498db' },
+  { id: 'archer',    name: 'CUNG THU',cost: 75,  hp: 75,  dmg: 16, spd: 30, range: 85, atkSpd: 1.2, badgeCol: '#2ecc71' },
+  { id: 'shield',    name: 'HO VE',  cost: 100, hp: 320, dmg: 12, spd: 22, range: 10, atkSpd: 1.4, isShield: true, badgeCol: '#95a5a6' },
+  { id: 'cavalry',   name: 'KY BINH', cost: 160, hp: 220, dmg: 40, spd: 52, range: 14, atkSpd: 1.1, badgeCol: '#e67e22' },
+  { id: 'mage',      name: 'PHAP SU',cost: 140, hp: 90,  dmg: 30, spd: 26, range: 72, atkSpd: 1.8, splash: 28, badgeCol: '#9b59b6' },
+  { id: 'catapult',  name: 'BAN DA',  cost: 220, hp: 190, dmg: 65, spd: 16, range: 110, atkSpd: 3.0, splash: 34, badgeCol: '#7f8c8d' }
 ];
 
 const SPELL_DEFINITIONS = [
-  { id: 'fire_rain',     name: 'MUA TEN', mana: 40, dmg: 40,  radius: 45, cd: 12, key: 'Q' },
-  { id: 'thunderstrike', name: 'SAM SET', mana: 65, dmg: 180, radius: 26, cd: 18, key: 'W' },
-  { id: 'divine_heal',   name: 'HOI MAU', mana: 50, heal: 90, radius: 80, cd: 15, key: 'E' }
+  { id: 'fire_rain',     name: 'MUA TEN', mana: 40, dmg: 45,  radius: 48, cd: 12, key: 'Q' },
+  { id: 'thunderstrike', name: 'SAM SET', mana: 65, dmg: 190, radius: 28, cd: 18, key: 'W' },
+  { id: 'divine_heal',   name: 'HOI MAU', mana: 50, heal: 100,radius: 90, cd: 15, key: 'E' }
 ];
 
-// ---------- 7. SINH NỀN BẢN ĐỒ CHI TIẾT (PROCEDURAL MAP) ----------
+// ---------- 7. BẢN ĐỒ CHIẾN TRƯỜNG THIÊN NHIÊN SỐNG ĐỘNG (ORGANIC BATTLEFIELD) ----------
 let mapBackgroundSurface = null;
-function generateBattlefieldSurface() {
+function generateMasterpieceBattlefield() {
   const c = mkCanvas(W, H);
   const ctx = c.getContext('2d');
   const r = rng(2026);
 
-  // 1. Trời đêm & Núi non hậu cảnh
-  px(ctx, 0, 0, W, 22, '#141224');
-  px(ctx, 0, 16, W, 6, '#211d38');
-  // Trăng lưỡi liềm pixel
-  px(ctx, 160, 4, 10, 10, '#fef1b8');
-  px(ctx, 163, 4, 10, 10, '#141224');
+  // 1. Trời hoàng hôn tím than & Dãy núi tuyết xa xăm
+  px(ctx, 0, 0, W, 14, '#1a1226');
+  px(ctx, 0, 14, W, 8, '#2d1838');
+  // Trăng lưỡi liềm vàng rực
+  px(ctx, 160, 3, 12, 12, '#ffeaa7');
+  px(ctx, 164, 3, 12, 12, '#1a1226');
+  // Dãy núi tuyết trùng điệp
+  for (let x = 0; x < W; x += 4) {
+    const mh = Math.sin(x * 0.05) * 5 + Math.cos(x * 0.02) * 3 + 12;
+    px(ctx, x, 22 - mh, 4, mh, '#3b2247');
+    px(ctx, x, 22 - mh, 2, 2, '#dfe6e9'); // tuyết đỉnh núi
+  }
 
-  // 2. Thảm cỏ xanh có hạt sỏi và hoa
-  px(ctx, 0, 22, W, 120, '#2b6e30');
-  for (let i = 0; i < 900; i++) {
+  // 2. Thảo nguyên xanh mướt (Toàn bộ mặt đất là cỏ xanh thiên nhiên đồng nhất)
+  px(ctx, 0, 22, W, 116, '#27ae60');
+  for (let i = 0; i < 1200; i++) {
     const gx = Math.floor(r() * W);
-    const gy = 22 + Math.floor(r() * 120);
-    px(ctx, gx, gy, 1, r() < 0.5 ? 1 : 2, r() < 0.5 ? '#225927' : '#35853b');
+    const gy = 22 + Math.floor(r() * 116);
+    px(ctx, gx, gy, 1, r() < 0.5 ? 1 : 2, r() < 0.4 ? '#219653' : '#2ecc71');
   }
-  // Hoa dại
-  for (let i = 0; i < 45; i++) {
-    const fx = Math.floor(r() * W), fy = 24 + Math.floor(r() * 115);
-    px(ctx, fx, fy, 2, 2, r() < 0.5 ? '#ffe066' : '#ffffff');
+  // Hoa dại vàng, hoa chuông đỏ và cỏ bốn lá
+  for (let i = 0; i < 60; i++) {
+    const fx = Math.floor(r() * W), fy = 24 + Math.floor(r() * 112);
+    px(ctx, fx, fy, 2, 2, r() < 0.4 ? '#f1c40f' : r() < 0.7 ? '#e74c3c' : '#ffffff');
   }
 
-  // 3. 3 Làn đường đất sỏi
+  // 3. Ba con đường mòn lát đá cuội hòa quyện vào cỏ (Organic Cobblestone Trails)
   LANES_Y.forEach(ly => {
-    px(ctx, 28, ly - 8, W - 56, 16, '#5a4533');
-    for (let i = 0; i < 350; i++) {
-      const rx = 28 + Math.floor(r() * (W - 56));
-      const ry = ly - 8 + Math.floor(r() * 16);
-      px(ctx, rx, ry, 1, 1, r() < 0.5 ? '#463424' : '#6f543e');
+    // Vết mòn đất sỏi tự nhiên
+    for (let x = 28; x < W - 28; x += 2) {
+      const roadH = 12 + Math.sin(x * 0.1) * 2;
+      px(ctx, x, ly - Math.floor(roadH / 2), 2, roadH, '#6d4c41');
+      if (r() < 0.6) px(ctx, x, ly - Math.floor(roadH / 2) + 1, 2, roadH - 2, '#795548');
     }
-    // Gờ viền cỏ ven đường
-    for (let x = 28; x < W - 28; x += 4) {
-      px(ctx, x, ly - 9, 2, 1, '#1a471e');
-      px(ctx, x + 2, ly + 8, 2, 1, '#1a471e');
+    // Từng viên đá cuội nổi khối rải rác trên đường
+    for (let x = 32; x < W - 32; x += 5) {
+      for (let oy = -4; oy <= 4; oy += 4) {
+        if (r() < 0.65) {
+          px(ctx, x + Math.floor(r() * 2), ly + oy, 3, 2, '#bcaaa4');
+          px(ctx, x + Math.floor(r() * 2), ly + oy + 1, 3, 1, '#4e342e');
+        }
+      }
     }
   });
 
-  // 4. Dòng sông uốn lượn ở giữa (X: 150 - 170)
-  px(ctx, 150, 22, 20, 120, '#1f629c');
-  for (let y = 22; y < 142; y += 2) {
-    px(ctx, 151 + Math.floor(r() * 17), y, randi(2, 4), 1, '#3caea3');
+  // 4. Dòng sông uốn lượn tự nhiên có ghềnh đá (Natural River with Rocks)
+  for (let y = 22; y < 138; y++) {
+    const curve = Math.sin(y * 0.08) * 3;
+    const rx = 150 + curve;
+    px(ctx, rx, y, 20, 1, '#2980b9');
+    px(ctx, rx + 2, y, 16, 1, '#3498db');
+    if (r() < 0.25) px(ctx, rx + Math.floor(r() * 14), y, 2, 1, '#ecf0f1'); // bọt nước
   }
-  for (let y = 22; y < 142; y += 3) {
-    px(ctx, 149, y, 2, 2, '#485252');
-    px(ctx, 169, y, 2, 2, '#485252');
+  // Bờ kè đá sỏi hai bên bờ sông
+  for (let y = 22; y < 138; y += 3) {
+    const curve = Math.sin(y * 0.08) * 3;
+    px(ctx, 148 + curve, y, 2, 3, '#7f8c8d');
+    px(ctx, 170 + curve, y, 2, 3, '#7f8c8d');
   }
 
-  // 5. 3 Cây cầu đá kiên cố
+  // 5. Ba cây cầu đá vòm kiên cố bắc ngang sông
   LANES_Y.forEach(ly => {
-    px(ctx, 147, ly - 9, 26, 18, '#7b8889');
-    for (let by = ly - 8; by < ly + 8; by += 4) {
-      px(ctx, 147, by, 26, 1, '#4f5757');
+    // Mặt cầu đá lát gạch xám
+    px(ctx, 146, ly - 9, 28, 18, '#95a5a6');
+    for (let by = ly - 8; by < ly + 8; by += 3) {
+      px(ctx, 146, by, 28, 1, '#7f8c8d');
     }
-    px(ctx, 147, ly - 10, 26, 2, '#b8c3c4');
-    px(ctx, 147, ly + 8, 26, 2, '#4f5757');
-    px(ctx, 147, ly - 11, 4, 3, '#eaf0f0');
-    px(ctx, 169, ly - 11, 4, 3, '#eaf0f0');
-    px(ctx, 147, ly + 8, 4, 3, '#eaf0f0');
-    px(ctx, 169, ly + 8, 4, 3, '#eaf0f0');
+    // Khe gạch rãnh thoát nước
+    for (let bx = 148; bx < 172; bx += 5) {
+      px(ctx, bx, ly - 8, 1, 16, '#576574');
+    }
+    // Lan can đá bảo vệ hai bên
+    px(ctx, 146, ly - 10, 28, 2, '#bdc3c7');
+    px(ctx, 146, ly + 8, 28, 2, '#576574');
+    // 4 Trụ đá đầu cầu có đèn lồng
+    px(ctx, 146, ly - 11, 4, 3, '#ecf0f1');
+    px(ctx, 170, ly - 11, 4, 3, '#ecf0f1');
+    px(ctx, 146, ly + 8, 4, 3, '#ecf0f1');
+    px(ctx, 170, ly + 8, 4, 3, '#ecf0f1');
   });
 
-  // 6. Rừng thông xanh rì rào trang trí
-  const plantTree = (tx, ty) => {
-    px(ctx, tx + 4, ty + 10, 3, 5, '#482a10');
-    px(ctx, tx + 2, ty + 2, 7, 9, '#1b5022');
-    px(ctx, tx, ty + 4, 11, 6, '#287531');
-    px(ctx, tx + 3, ty, 5, 4, '#3f9b43');
+  // 6. Rừng thông cổ thụ xanh ngắt đổ bóng
+  const plantMajesticTree = (tx, ty) => {
+    ctx.fillStyle = 'rgba(8,6,14,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(tx + 6, ty + 15, 8, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Thân cây sồi
+    px(ctx, tx + 4, ty + 9, 4, 7, '#5d4037');
+    // Tán lá 3 tầng
+    px(ctx, tx + 1, ty + 5, 10, 5, '#196f3d');
+    px(ctx, tx, ty + 2, 12, 4, '#229954');
+    px(ctx, tx + 2, ty - 1, 8, 4, '#27ae60');
+    px(ctx, tx + 4, ty - 3, 4, 3, '#58d68d');
   };
-  plantTree(38, 25); plantTree(105, 27); plantTree(205, 25); plantTree(270, 26);
-  plantTree(40, 124); plantTree(110, 122); plantTree(200, 124); plantTree(265, 123);
+  plantMajesticTree(36, 24); plantMajesticTree(105, 26); plantMajesticTree(205, 24); plantMajesticTree(270, 25);
+  plantMajesticTree(38, 122); plantMajesticTree(108, 120); plantMajesticTree(202, 122); plantMajesticTree(268, 121);
 
   // 7. Khu khai mỏ vàng ở hậu phương hai phe
   // Mỏ vàng phe ta (Trái)
-  px(ctx, 6, 124, 14, 10, '#3a3a46');
-  px(ctx, 8, 126, 10, 6, '#141224'); // cửa hầm
-  px(ctx, 10, 128, 6, 4, '#fed330'); // quặng vàng
+  px(ctx, 4, 120, 18, 14, '#4a4e69');
+  px(ctx, 6, 122, 14, 10, '#22223b');
+  px(ctx, 8, 125, 8, 6, '#f1c40f');
+  px(ctx, 9, 126, 4, 3, '#fff9c4');
   // Mỏ vàng phe địch (Phải)
-  px(ctx, W - 20, 124, 14, 10, '#463a3a');
-  px(ctx, W - 18, 126, 10, 6, '#141224');
-  px(ctx, W - 16, 128, 6, 4, '#fed330');
+  px(ctx, W - 22, 120, 18, 14, '#543d37');
+  px(ctx, W - 20, 122, 14, 10, '#221512');
+  px(ctx, W - 16, 125, 8, 6, '#f1c40f');
+  px(ctx, W - 15, 126, 4, 3, '#fff9c4');
 
   return c;
 }
 
-// ---------- 8. LỚP THỰC THỂ BINH SĨ (UNIT LOGIC) ----------
+// ---------- 8. LỚP THỰC THỂ BINH SĨ (BATTLE UNIT) ----------
 class BattleUnit {
   constructor(game, def, laneIdx, team) {
     this.game = game;
@@ -446,24 +498,24 @@ class BattleUnit {
     this.swingTimer = 0;
     this.flashTimer = 0;
 
-    // Logic riêng cho Thợ mỏ (Miner)
-    this.minerState = 'to_mine'; // to_mine, mining, to_castle
+    this.minerState = 'to_mine';
     this.mineTimer = 0;
   }
 
   takeDamage(amount, isRangedArrow = false) {
     if (this.isShield && isRangedArrow) {
-      amount *= 0.3; // Giảm 70% sát thương từ cung tên
-      this.game.spawnFloatingText('BLOCK!', this.x, this.y - 12, '#8ab4ff');
+      amount *= 0.25;
+      this.game.spawnFloatingText('BLOCK!', this.x, this.y - 12, '#54a0ff');
+      this.game.spawnParticles(this.x, this.y - 6, 4, '#f1c40f');
     }
     this.hp -= amount;
     this.flashTimer = 0.12;
-    this.game.spawnParticles(this.x, this.y - 6, 4, '#e03a3a');
+    this.game.spawnParticles(this.x, this.y - 6, 5, '#ee5253');
     this.game.spawnFloatingText(`-${Math.round(amount)}`, this.x, this.y - 12, '#ff6b6b');
     SoundFX.play('hit');
 
     if (this.hp <= 0) {
-      this.game.spawnParticles(this.x, this.y - 6, 12, this.team === 'player' ? '#8ab4ff' : '#ff8585');
+      this.game.spawnParticles(this.x, this.y - 6, 15, this.team === 'player' ? '#54a0ff' : '#ff7675');
     }
   }
 
@@ -475,35 +527,32 @@ class BattleUnit {
     if (this.swingTimer > 0) this.swingTimer -= dt * 4;
     this.walkTimer += dt * 10;
 
-    // 1. Thợ mỏ tự động đi khai khoáng và nạp vàng
     if (this.isMiner) {
       this.updateMinerBehavior(dt);
       return true;
     }
 
-    // 2. Tìm mục tiêu trên cùng làn
     this.target = this.findTarget();
 
     if (this.target) {
       const dist = Math.abs(this.target.x - this.x);
       if (dist <= this.range) {
-        // Tấn công mục tiêu
         if (this.cooldown <= 0) {
           this.cooldown = this.atkSpd;
           this.swingTimer = 1;
           this.performAttack();
         }
       } else {
-        // Di chuyển tiếp cận
         const dir = this.team === 'player' ? 1 : -1;
         this.x += dir * this.spd * dt;
+        if (this.def.id === 'cavalry' && Math.random() < 0.25) {
+          this.game.spawnParticles(this.x - dir * 8, this.y, 2, '#a1887f');
+        }
       }
     } else {
-      // Tiến công về thành đối phương
       const dir = this.team === 'player' ? 1 : -1;
       this.x += dir * this.spd * dt;
 
-      // Đánh sập cổng thành đối phương nếu áp sát
       const enemyCastleX = this.team === 'player' ? W - 28 : 28;
       if (Math.abs(this.x - enemyCastleX) <= this.range + 8) {
         if (this.cooldown <= 0) {
@@ -523,7 +572,7 @@ class BattleUnit {
   updateMinerBehavior(dt) {
     const mineX = this.team === 'player' ? 12 : W - 12;
     const castleX = this.team === 'player' ? 28 : W - 28;
-    const mineY = 128;
+    const mineY = 126;
 
     if (this.minerState === 'to_mine') {
       const dx = mineX - this.x;
@@ -548,11 +597,11 @@ class BattleUnit {
       const d = Math.hypot(dx, dy);
       if (d < 4) {
         if (this.team === 'player') {
-          this.game.gold = Math.min(999, this.game.gold + 18);
-          this.game.spawnFloatingText('+18G', this.x, this.y - 12, '#ffd438');
+          this.game.gold = Math.min(999, this.game.gold + 20);
+          this.game.spawnFloatingText('+20G', this.x, this.y - 12, '#f1c40f');
           SoundFX.play('gold');
         } else {
-          this.game.aiGold += 18;
+          this.game.aiGold += 20;
         }
         this.minerState = 'to_mine';
       } else {
@@ -569,7 +618,7 @@ class BattleUnit {
         x: this.x, y: this.y - 6,
         targetX: this.target.x, targetY: this.target.y - 6,
         startX: this.x, startY: this.y - 6,
-        progress: 0, speed: 2.6,
+        progress: 0, speed: 2.8,
         target: this.target, dmg: this.dmg, splash: 0,
         type: 'arrow', team: this.team
       });
@@ -594,7 +643,6 @@ class BattleUnit {
         type: 'boulder', team: this.team
       });
     } else {
-      // Đòn đánh cận chiến
       if (this.target && this.target.hp > 0) {
         this.target.takeDamage(this.dmg, false);
       }
@@ -631,6 +679,17 @@ class BattleUnit {
     ctx.ellipse(this.x, this.y, spr.width * 0.45, 2.5, 0, 0, Math.PI * 2);
     ctx.fill();
 
+    // Vệt chém kiếm (Sword Slash Arc Effect)
+    if (this.swingTimer > 0 && this.def.id === 'swordsman') {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      const slashDir = this.team === 'player' ? 1 : -1;
+      ctx.beginPath();
+      ctx.arc(this.x + slashDir * 10, this.y - 6, 8, -Math.PI / 3, Math.PI / 3, false);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#fff';
+      ctx.stroke();
+    }
+
     // Hit flash
     if (this.flashTimer > 0) {
       ctx.globalCompositeOperation = 'lighter';
@@ -640,19 +699,21 @@ class BattleUnit {
       ctx.drawImage(spr, drawX, drawY);
     }
 
-    // Thanh máu trên đầu
+    // Thanh máu trên đầu có viền kim loại 3D
     if (this.hp < this.maxHp || this.isShield) {
-      const barW = Math.max(10, spr.width);
+      const barW = Math.max(12, spr.width);
       const barX = Math.round(this.x - barW / 2);
-      const barY = Math.round(drawY - 4);
-      px(ctx, barX, barY, barW, 2, '#0c0a14');
+      const barY = Math.round(drawY - 5);
+      px(ctx, barX - 1, barY - 1, barW + 2, 4, '#0d0a14');
+      px(ctx, barX, barY, barW, 2, '#2c3e50');
       const ratio = clamp(this.hp / this.maxHp, 0, 1);
-      px(ctx, barX, barY, Math.round(barW * ratio), 2, this.team === 'player' ? '#3a76e8' : '#e03a3a');
+      px(ctx, barX, barY, Math.round(barW * ratio), 2, this.team === 'player' ? '#2e86de' : '#ee5253');
+      px(ctx, barX, barY, Math.round(barW * ratio), 1, this.team === 'player' ? '#54a0ff' : '#ff7675');
     }
   }
 }
 
-// ---------- 9. BỘ NÃO QUẢN TRỊ TRÒ CHƠI CHÍNH ----------
+// ---------- 9. BỘ NÃO ĐIỀU HÀNH GAME CHÍNH (ENGINE) ----------
 class PixelKingdomEngine {
   constructor(canvas) {
     this.canvas = canvas;
@@ -661,12 +722,16 @@ class PixelKingdomEngine {
     this.bctx = this.buf.getContext('2d', { alpha: false });
     this.bctx.imageSmoothingEnabled = false;
 
-    // Tài nguyên & Chỉ huy
-    this.gold = 160;
+    // Buffer Ánh Sáng Động (Dynamic Light Mask)
+    this.lightBuf = mkCanvas(W, H);
+    this.lctx = this.lightBuf.getContext('2d');
+
+    // Kinh tế & Mana
+    this.gold = 180;
     this.mana = 60;
     this.goldTimer = 0;
     this.manaTimer = 0;
-    this.selectedLane = 1; // 0: TOP, 1: MID, 2: BOT
+    this.selectedLane = 1;
 
     // Máu thành trì
     this.playerCastleHp = 1000;
@@ -674,8 +739,8 @@ class PixelKingdomEngine {
     this.castleMaxHp = 1000;
 
     // Trí tuệ nhân tạo (AI)
-    this.aiGold = 130;
-    this.aiSpawnCooldown = 2.5;
+    this.aiGold = 140;
+    this.aiSpawnCooldown = 2.4;
 
     // Thực thể & Kỹ năng
     this.units = [];
@@ -686,13 +751,13 @@ class PixelKingdomEngine {
     this.ballistaTimer = 0;
 
     // Trạng thái vận hành
-    this.state = 'play'; // play, win, lose
+    this.state = 'play';
     this.shake = 0;
     this.gameTime = 0;
     this.lastTime = performance.now();
 
     // Khởi tạo đồ họa
-    mapBackgroundSurface = generateBattlefieldSurface();
+    mapBackgroundSurface = generateMasterpieceBattlefield();
     this.setupInputs();
     this.resize();
     window.addEventListener('resize', () => this.resize());
@@ -705,7 +770,6 @@ class PixelKingdomEngine {
     const cssW = window.innerWidth;
     const cssH = window.innerHeight;
 
-    // Tỉ lệ scale số nguyên trong không gian màn hình
     this.cssScale = Math.max(1, Math.floor(Math.min(cssW / W, cssH / H)));
     this.cssOffsetX = Math.floor((cssW - W * this.cssScale) / 2);
     this.cssOffsetY = Math.floor((cssH - H * this.cssScale) / 2);
@@ -718,7 +782,6 @@ class PixelKingdomEngine {
   }
 
   setupInputs() {
-    // 1. Phím tắt Bàn phím PC
     window.addEventListener('keydown', e => {
       SoundFX.init();
       const k = e.key.toUpperCase();
@@ -738,7 +801,6 @@ class PixelKingdomEngine {
       }
     });
 
-    // 2. Chạm cảm ứng & Click chuột chuẩn xác
     const handlePointerAction = (clientX, clientY) => {
       SoundFX.init();
       const rect = this.canvas.getBoundingClientRect();
@@ -750,25 +812,24 @@ class PixelKingdomEngine {
 
       if (bx < 0 || bx >= W || by < 0 || by >= H) return;
 
-      // Click trực tiếp vào 3 làn chiến trường
+      // Click vào chiến trường
       if (by >= BATTLE_TOP && by < HUD_TOP) {
-        if (by < 66) this.selectedLane = 0;
-        else if (by < 98) this.selectedLane = 1;
+        if (by < 64) this.selectedLane = 0;
+        else if (by < 96) this.selectedLane = 1;
         else this.selectedLane = 2;
         return;
       }
 
-      // Click trên thanh điều khiển HUD
+      // Click thanh HUD
       if (by >= HUD_TOP) {
-        // Nút chọn làn (bx: 0 -> 60)
-        if (bx >= 0 && bx < 60) {
-          if (by < 155) this.selectedLane = 0;
-          else if (by < 167) this.selectedLane = 1;
+        if (bx >= 0 && bx < 62) {
+          if (by < 152) this.selectedLane = 0;
+          else if (by < 164) this.selectedLane = 1;
           else this.selectedLane = 2;
           return;
         }
 
-        // 7 Nút mua lính (X: 64 -> 236)
+        // 7 Nút lính
         for (let i = 0; i < 7; i++) {
           const sx = HUD_UNIT_START_X + i * (HUD_SLOT_W + 1);
           if (bx >= sx && bx < sx + HUD_SLOT_W && by >= HUD_TOP + 2) {
@@ -777,7 +838,7 @@ class PixelKingdomEngine {
           }
         }
 
-        // 3 Nút phép thuật (X: 244 -> 316)
+        // 3 Nút phép
         for (let i = 0; i < 3; i++) {
           const sx = HUD_SPELL_START_X + i * (HUD_SPELL_SLOT_W + 2);
           if (bx >= sx && bx < sx + HUD_SPELL_SLOT_W && by >= HUD_TOP + 2) {
@@ -823,12 +884,12 @@ class PixelKingdomEngine {
     if (sp.id === 'fire_rain') {
       SoundFX.play('arrow');
       this.shake = 6;
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 22; i++) {
         setTimeout(() => {
           const rx = 160 + rand(-sp.radius, sp.radius);
-          this.spawnParticles(rx, targetY, 4, '#ff9a1f');
+          this.spawnParticles(rx, targetY, 5, '#e67e22');
           for (const u of this.units) {
-            if (u.team === 'enemy' && u.lane === this.selectedLane && Math.abs(u.x - rx) < 18) {
+            if (u.team === 'enemy' && u.lane === this.selectedLane && Math.abs(u.x - rx) < 20) {
               u.takeDamage(sp.dmg, true);
             }
           }
@@ -838,7 +899,7 @@ class PixelKingdomEngine {
       SoundFX.play('boom');
       this.shake = 12;
       const tx = 160;
-      this.spawnParticles(tx, targetY, 30, '#7df9ff');
+      this.spawnParticles(tx, targetY, 35, '#00d2d3');
       for (const u of this.units) {
         if (u.team === 'enemy' && u.lane === this.selectedLane && Math.abs(u.x - tx) <= sp.radius) {
           u.takeDamage(sp.dmg, false);
@@ -850,8 +911,8 @@ class PixelKingdomEngine {
       for (const u of this.units) {
         if (u.team === 'player' && u.hp > 0) {
           u.hp = Math.min(u.maxHp, u.hp + sp.heal);
-          this.spawnParticles(u.x, u.y - 8, 8, '#7dff8a');
-          this.spawnFloatingText(`+${sp.heal}`, u.x, u.y - 14, '#7dff8a');
+          this.spawnParticles(u.x, u.y - 8, 10, '#1dd1a1');
+          this.spawnFloatingText(`+${sp.heal}`, u.x, u.y - 14, '#1dd1a1');
         }
       }
     }
@@ -876,7 +937,7 @@ class PixelKingdomEngine {
   spawnParticles(x, y, count, color) {
     for (let i = 0; i < count; i++) {
       const a = Math.random() * Math.PI * 2;
-      const s = rand(20, 60);
+      const s = rand(20, 65);
       this.particles.push({
         x, y,
         vx: Math.cos(a) * s, vy: Math.sin(a) * s,
@@ -892,10 +953,10 @@ class PixelKingdomEngine {
 
   updateAI(dt) {
     this.aiSpawnCooldown -= dt;
-    this.aiGold += dt * 16;
+    this.aiGold += dt * 17;
 
     if (this.aiSpawnCooldown <= 0) {
-      this.aiSpawnCooldown = rand(2.2, 3.8);
+      this.aiSpawnCooldown = rand(2.0, 3.6);
       const affordable = UNIT_DEFINITIONS.filter(u => u.cost <= this.aiGold);
       if (affordable.length > 0) {
         const chosen = pick(affordable);
@@ -906,9 +967,8 @@ class PixelKingdomEngine {
 
   updateCastleDefense(dt) {
     this.ballistaTimer += dt;
-    if (this.ballistaTimer >= 1.8) {
+    if (this.ballistaTimer >= 1.6) {
       this.ballistaTimer = 0;
-      // Tháp nỏ phe ta bắn địch áp sát
       for (const u of this.units) {
         if (u.team === 'enemy' && u.x < 85 && u.hp > 0) {
           SoundFX.play('arrow');
@@ -916,14 +976,13 @@ class PixelKingdomEngine {
             x: 24, y: LANES_Y[u.lane] - 12,
             targetX: u.x, targetY: u.y - 6,
             startX: 24, startY: LANES_Y[u.lane] - 12,
-            progress: 0, speed: 3.0,
-            target: u, dmg: 22, splash: 0,
+            progress: 0, speed: 3.2,
+            target: u, dmg: 25, splash: 0,
             type: 'arrow', team: 'player'
           });
           break;
         }
       }
-      // Tháp nỏ phe địch bắn quân ta áp sát
       for (const u of this.units) {
         if (u.team === 'player' && u.x > W - 85 && u.hp > 0) {
           SoundFX.play('arrow');
@@ -931,8 +990,8 @@ class PixelKingdomEngine {
             x: W - 24, y: LANES_Y[u.lane] - 12,
             targetX: u.x, targetY: u.y - 6,
             startX: W - 24, startY: LANES_Y[u.lane] - 12,
-            progress: 0, speed: 3.0,
-            target: u, dmg: 22, splash: 0,
+            progress: 0, speed: 3.2,
+            target: u, dmg: 25, splash: 0,
             type: 'arrow', team: 'enemy'
           });
           break;
@@ -944,7 +1003,6 @@ class PixelKingdomEngine {
   update(dt) {
     this.gameTime += dt;
 
-    // Sản sinh tài nguyên thụ động
     this.goldTimer += dt;
     if (this.goldTimer >= 0.5) {
       this.goldTimer = 0;
@@ -956,7 +1014,6 @@ class PixelKingdomEngine {
       this.mana = Math.min(100, this.mana + 3);
     }
 
-    // Cooldown phép thuật
     for (let i = 0; i < 3; i++) {
       if (this.spellCooldowns[i] > 0) this.spellCooldowns[i] -= dt;
     }
@@ -966,10 +1023,9 @@ class PixelKingdomEngine {
       this.updateCastleDefense(dt);
     }
 
-    // Cập nhật lính
     this.units = this.units.filter(u => u.update(dt));
 
-    // Cập nhật đường đạn bay parabol
+    // Đường đạn với hiệu ứng vệt sáng
     this.projectiles = this.projectiles.filter(p => {
       p.progress += p.speed * dt;
       const curX = p.startX + (p.targetX - p.startX) * p.progress;
@@ -979,8 +1035,8 @@ class PixelKingdomEngine {
 
       if (p.progress >= 1) {
         if (p.splash > 0) {
-          this.spawnParticles(p.targetX, p.targetY, 15, p.type === 'boulder' ? '#718093' : '#ff9a1f');
-          this.shake = 4;
+          this.spawnParticles(p.targetX, p.targetY, 18, p.type === 'boulder' ? '#8395a7' : '#ff9f43');
+          this.shake = 5;
           for (const u of this.units) {
             if (u.team !== p.team && Math.abs(u.x - p.targetX) <= p.splash) {
               u.takeDamage(p.dmg, false);
@@ -994,7 +1050,6 @@ class PixelKingdomEngine {
       return true;
     });
 
-    // Cập nhật hạt hiệu ứng
     this.particles = this.particles.filter(pt => {
       pt.x += pt.vx * dt;
       pt.y += pt.vy * dt;
@@ -1002,7 +1057,6 @@ class PixelKingdomEngine {
       return pt.life > 0;
     });
 
-    // Cập nhật chữ số nổi
     this.floatingTexts = this.floatingTexts.filter(ft => {
       ft.y -= dt * 14;
       ft.life -= dt;
@@ -1020,30 +1074,30 @@ class PixelKingdomEngine {
       b.translate((Math.random() - 0.5) * this.shake, (Math.random() - 0.5) * this.shake);
     }
 
-    // 1. Vẽ nền bản đồ đã nướng sẵn
+    // 1. Vẽ nền bản đồ thung lũng xanh mướt
     b.drawImage(mapBackgroundSurface, 0, 0);
 
-    // 2. Vẽ tường thành, lỗ châu mai, cờ hiệu và đuốc
+    // 2. Vẽ thành lũy hùng tráng hai bên
     this.drawCastleFortresses(b);
 
-    // 3. Cột máu thành trì trên đỉnh màn hình
+    // 3. Cột máu thành trì trên cùng
     this.drawCastleHealthBars(b);
 
     // 4. Vẽ lính sắp xếp theo trục Y (Depth Sorting)
     const sortedUnits = [...this.units].sort((a, b) => a.y - b.y);
     for (const u of sortedUnits) u.draw(b);
 
-    // 5. Vẽ đường đạn
+    // 5. Vẽ đường đạn với vệt sáng
     for (const p of this.projectiles) {
       if (p.type === 'arrow') {
-        px(b, p.x, p.y, 3, 1, '#ffffff');
-        px(b, p.x - 1, p.y + 1, 1, 1, '#7a4f2d');
+        px(b, p.x, p.y, 4, 1, '#ffffff');
+        px(b, p.x - 1, p.y + 1, 1, 1, '#795548');
       } else if (p.type === 'fireball') {
-        px(b, p.x - 2, p.y - 2, 4, 4, '#ff9a1f');
-        px(b, p.x - 1, p.y - 1, 2, 2, '#fff4b8');
+        px(b, p.x - 3, p.y - 3, 6, 6, '#ff9f43');
+        px(b, p.x - 1, p.y - 1, 2, 2, '#fff');
       } else if (p.type === 'boulder') {
-        px(b, p.x - 2, p.y - 2, 4, 4, '#57606f');
-        px(b, p.x - 1, p.y - 1, 2, 2, '#747d8c');
+        px(b, p.x - 3, p.y - 3, 6, 6, '#576574');
+        px(b, p.x - 2, p.y - 2, 4, 4, '#8395a7');
       }
     }
 
@@ -1055,25 +1109,28 @@ class PixelKingdomEngine {
       drawPixelText(b, ft.str, ft.x, ft.y, ft.col, 1, 'c');
     }
 
+    // 7. Lớp Ánh Sáng Động (Dynamic Lighting Pass)
+    this.renderDynamicLighting(b);
+
     b.restore();
 
-    // 7. Vẽ thanh giao diện điều khiển (Tactical HUD) ở đáy màn hình
-    this.drawTacticalHUD(b);
+    // 8. Vẽ thanh giao diện điều khiển (Tactical HUD Mạ Vàng)
+    this.drawGildedHUD(b);
 
-    // 8. Màn hình Kết Thúc Game
+    // 9. Màn hình Kết Thúc Game
     if (this.state !== 'play') {
-      px(b, 0, 0, W, H, 'rgba(8,6,14,0.72)');
+      px(b, 0, 0, W, H, 'rgba(8,6,14,0.78)');
       if (this.state === 'win') {
-        drawPixelText(b, 'VIET NAM QUAN THANG!', W / 2, H / 2 - 14, '#fed330', 2, 'c');
+        drawPixelText(b, 'VIET NAM QUAN THANG!', W / 2, H / 2 - 14, '#f1c40f', 2, 'c');
         drawPixelText(b, 'DA CONG PHA HOAN TOAN THANH DICH', W / 2, H / 2 + 6, '#ffffff', 1, 'c');
       } else {
-        drawPixelText(b, 'THANH TRI THAT THU!', W / 2, H / 2 - 14, '#ff4757', 2, 'c');
+        drawPixelText(b, 'THANH TRI THAT THU!', W / 2, H / 2 - 14, '#ee5253', 2, 'c');
         drawPixelText(b, 'QUAN DICH DA TRAN VAO THANH', W / 2, H / 2 + 6, '#ffffff', 1, 'c');
       }
-      drawPixelText(b, 'NHAN F5 HOAC CLICK DE CHOI LAI', W / 2, H / 2 + 22, '#8ab4ff', 1, 'c');
+      drawPixelText(b, 'NHAN F5 HOAC CLICK DE CHOI LAI', W / 2, H / 2 + 22, '#54a0ff', 1, 'c');
     }
 
-    // 9. Phóng to Buffer lên Canvas thực tế (Integer Scaling)
+    // 10. Phóng to Buffer lên Canvas thực tế (Integer Scaling)
     px(this.ctx, 0, 0, this.canvas.width, this.canvas.height, '#090810');
     this.ctx.drawImage(
       this.buf,
@@ -1084,7 +1141,7 @@ class PixelKingdomEngine {
       Math.floor(H * this.cssScale * this.dpr)
     );
 
-    // 10. Gợi ý xoay ngang nếu cầm dọc điện thoại
+    // Gợi ý xoay ngang nếu cầm dọc điện thoại
     if (window.innerWidth < window.innerHeight) {
       const hintY = Math.max(12 * this.dpr, Math.floor(this.cssOffsetY * this.dpr) - 24 * this.dpr);
       drawPixelText(
@@ -1092,125 +1149,162 @@ class PixelKingdomEngine {
         'XOAY NGANG MAN HINH DE CHOI TO DEP',
         this.canvas.width / 2,
         hintY,
-        '#fed330',
+        '#f1c40f',
         Math.max(1, Math.round(this.dpr)),
         'c'
       );
     }
   }
 
+  renderDynamicLighting(targetCtx) {
+    const lc = this.lctx;
+    lc.clearRect(0, 0, W, H);
+    lc.fillStyle = 'rgba(15, 12, 28, 0.28)';
+    lc.fillRect(0, 0, W, BATTLE_BOT);
+
+    lc.globalCompositeOperation = 'destination-out';
+    const drawLightCircle = (lx, ly, radius) => {
+      const grad = lc.createRadialGradient(lx, ly, 0, lx, ly, radius);
+      grad.addColorStop(0, 'rgba(0,0,0,1)');
+      grad.addColorStop(0.5, 'rgba(0,0,0,0.5)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      lc.fillStyle = grad;
+      lc.beginPath();
+      lc.arc(lx, ly, radius, 0, Math.PI * 2);
+      lc.fill();
+    };
+
+    drawLightCircle(22, 66, 26);
+    drawLightCircle(22, 98, 26);
+    drawLightCircle(W - 22, 66, 26);
+    drawLightCircle(W - 22, 98, 26);
+
+    for (const p of this.projectiles) {
+      if (p.type === 'fireball') drawLightCircle(p.x, p.y, 22);
+    }
+
+    lc.globalCompositeOperation = 'source-over';
+    targetCtx.drawImage(this.lightBuf, 0, 0);
+  }
+
   drawCastleFortresses(ctx) {
     const t = this.gameTime;
 
-    // 1. Tường thành phe ta (Trái: X: 0 -> 26)
-    px(ctx, 0, 22, 26, 120, '#353b48');
-    px(ctx, 24, 22, 2, 120, '#1e222b');
-    // Gạch đá tường thành
-    for (let y = 24; y < 140; y += 8) {
-      px(ctx, 0, y, 24, 1, '#272c36');
+    // 1. Pháo đài Vương Quốc (Trái: X: 0 -> 26) - Đá khối xám xanh hoa văn cổ
+    px(ctx, 0, 22, 26, 116, '#2f3542');
+    px(ctx, 24, 22, 2, 116, '#1e222b');
+    for (let y = 24; y < 136; y += 8) {
+      px(ctx, 0, y, 24, 1, '#1e272e');
       for (let x = 0; x < 24; x += 8) {
-        px(ctx, (y % 16 === 0 ? x : x + 4) % 24, y, 1, 7, '#485460');
+        px(ctx, (y % 16 === 0 ? x : x + 4) % 24, y, 1, 7, '#57606f');
       }
     }
     // Lỗ châu mai
-    for (let y = 22; y < 140; y += 12) px(ctx, 22, y, 4, 6, '#110c1c');
-    // 3 Cổng thành mở ra 3 làn
+    for (let y = 22; y < 138; y += 12) px(ctx, 22, y, 4, 6, '#08060f');
+    // 3 Cổng thành mở ra 3 làn có chấn song sắt
     LANES_Y.forEach(ly => {
       px(ctx, 0, ly - 7, 26, 14, '#14141e');
-      px(ctx, 0, ly - 7, 26, 2, '#57606f');
-      px(ctx, 22, ly - 7, 4, 14, '#0c0a14');
+      px(ctx, 0, ly - 7, 26, 2, '#747d8c');
+      px(ctx, 22, ly - 7, 4, 14, '#08060f');
     });
     // Cờ Hoàng Gia vẫy gió
     const flagWave = Math.sin(t * 5) * 1.5;
-    px(ctx, 12, 15, 2, 14, '#7a4f2d');
-    px(ctx, 14, 16 + flagWave, 10, 6, '#3a76e8');
-    px(ctx, 14, 18 + flagWave, 10, 2, '#fed330');
+    px(ctx, 12, 15, 2, 14, '#795548');
+    px(ctx, 14, 16 + flagWave, 10, 6, '#2e86de');
+    px(ctx, 14, 18 + flagWave, 10, 2, '#f1c40f');
     // Đuốc thành rực lửa
     const flicker = Math.sin(t * 14) > 0 ? 1 : 0;
-    px(ctx, 20, 66, 3, 2, '#482a10');
-    px(ctx, 21, 64 - flicker, 2, 2, '#ff9a1f');
-    px(ctx, 20, 98, 3, 2, '#482a10');
-    px(ctx, 21, 96 - flicker, 2, 2, '#ff9a1f');
+    px(ctx, 20, 66, 3, 2, '#5d4037');
+    px(ctx, 21, 64 - flicker, 2, 2, '#ff9f43');
+    px(ctx, 20, 98, 3, 2, '#5d4037');
+    px(ctx, 21, 96 - flicker, 2, 2, '#ff9f43');
 
-    // 2. Tường thành phe địch (Phải: X: 294 -> 320)
-    px(ctx, W - 26, 22, 26, 120, '#433434');
-    px(ctx, W - 26, 22, 2, 120, '#271e1e');
-    for (let y = 24; y < 140; y += 8) {
-      px(ctx, W - 26, y, 24, 1, '#302424');
+    // 2. Pháo đài Đế Chế (Phải: X: 294 -> 320) - Đá hắc ám viền đỏ thẫm
+    px(ctx, W - 26, 22, 26, 116, '#3d2b2b');
+    px(ctx, W - 26, 22, 2, 116, '#221515');
+    for (let y = 24; y < 136; y += 8) {
+      px(ctx, W - 26, y, 24, 1, '#271919');
       for (let x = 0; x < 24; x += 8) {
-        px(ctx, W - 26 + ((y % 16 === 0 ? x : x + 4) % 24), y, 1, 7, '#594444');
+        px(ctx, W - 26 + ((y % 16 === 0 ? x : x + 4) % 24), y, 1, 7, '#573d3d');
       }
     }
-    for (let y = 22; y < 140; y += 12) px(ctx, W - 26, y, 4, 6, '#1c0c0c');
+    for (let y = 22; y < 138; y += 12) px(ctx, W - 26, y, 4, 6, '#140808');
     LANES_Y.forEach(ly => {
-      px(ctx, W - 26, ly - 7, 26, 14, '#1e1414');
-      px(ctx, W - 26, ly - 7, 26, 2, '#6f5757');
-      px(ctx, W - 26, ly - 7, 4, 14, '#140c0c');
+      px(ctx, W - 26, ly - 7, 26, 14, '#190e0e');
+      px(ctx, W - 26, ly - 7, 26, 2, '#7a5252');
+      px(ctx, W - 26, ly - 7, 4, 14, '#0f0606');
     });
     // Cờ Đế Chế vẫy gió
-    px(ctx, W - 14, 15, 2, 14, '#7a4f2d');
-    px(ctx, W - 24, 16 - flagWave, 10, 6, '#e03a3a');
-    px(ctx, W - 24, 18 - flagWave, 10, 2, '#f5f6fa');
+    px(ctx, W - 14, 15, 2, 14, '#795548');
+    px(ctx, W - 24, 16 - flagWave, 10, 6, '#ee5253');
+    px(ctx, W - 24, 18 - flagWave, 10, 2, '#f8f9fa');
     // Đuốc thành phe địch
-    px(ctx, W - 23, 66, 3, 2, '#482a10');
-    px(ctx, W - 23, 64 - flicker, 2, 2, '#ff9a1f');
-    px(ctx, W - 23, 98, 3, 2, '#482a10');
-    px(ctx, W - 23, 96 - flicker, 2, 2, '#ff9a1f');
+    px(ctx, W - 23, 66, 3, 2, '#5d4037');
+    px(ctx, W - 23, 64 - flicker, 2, 2, '#ff9f43');
+    px(ctx, W - 23, 98, 3, 2, '#5d4037');
+    px(ctx, W - 23, 96 - flicker, 2, 2, '#ff9f43');
   }
 
   drawCastleHealthBars(ctx) {
     // Máu thành phe ta (Trái)
-    px(ctx, 4, 3, 70, 7, '#110c1c');
+    px(ctx, 4, 3, 72, 7, '#0d0a14');
     const pRatio = clamp(this.playerCastleHp / this.castleMaxHp, 0, 1);
-    px(ctx, 5, 4, Math.round(68 * pRatio), 5, '#3a76e8');
-    drawPixelText(ctx, `PHE TA: ${this.playerCastleHp}`, 6, 12, '#8ab4ff', 1);
+    px(ctx, 5, 4, Math.round(70 * pRatio), 5, '#2e86de');
+    px(ctx, 5, 4, Math.round(70 * pRatio), 2, '#54a0ff');
+    drawPixelText(ctx, `PHE TA: ${this.playerCastleHp}`, 6, 12, '#9ec2ff', 1);
 
     // Máu thành phe địch (Phải)
-    px(ctx, W - 74, 3, 70, 7, '#110c1c');
+    px(ctx, W - 76, 3, 72, 7, '#0d0a14');
     const eRatio = clamp(this.enemyCastleHp / this.castleMaxHp, 0, 1);
-    px(ctx, W - 73, 4, Math.round(68 * eRatio), 5, '#e03a3a');
-    drawPixelText(ctx, `QUAN DICH: ${this.enemyCastleHp}`, W - 6, 12, '#ff8585', 1, 'r');
+    px(ctx, W - 75, 4, Math.round(70 * eRatio), 5, '#ee5253');
+    px(ctx, W - 75, 4, Math.round(70 * eRatio), 2, '#ff7675');
+    drawPixelText(ctx, `QUAN DICH: ${this.enemyCastleHp}`, W - 6, 12, '#ff9aa2', 1, 'r');
   }
 
-  drawTacticalHUD(ctx) {
-    // Khung viền nền HUD
-    px(ctx, 0, HUD_TOP, W, H - HUD_TOP, '#131120');
-    px(ctx, 0, HUD_TOP, W, 2, '#2d2745');
-    px(ctx, 0, HUD_TOP + 2, W, 1, '#090810');
+  drawGildedHUD(ctx) {
+    // Khung nẹp kim loại mạ vàng
+    px(ctx, 0, HUD_TOP, W, H - HUD_TOP, '#151324');
+    px(ctx, 0, HUD_TOP, W, 2, '#f1c40f');
+    px(ctx, 0, HUD_TOP + 2, W, 1, '#96740c');
 
     // 1. Chỉ số Tài Nguyên (Vàng & Mana)
-    drawPixelText(ctx, `VANG: ${this.gold}`, 4, HUD_TOP + 4, '#fed330', 1);
-    drawPixelText(ctx, `MANA: ${this.mana}`, 4, HUD_TOP + 12, '#4fc3f7', 1);
+    px(ctx, 4, HUD_TOP + 5, 4, 4, '#f1c40f');
+    drawPixelText(ctx, `VANG: ${this.gold}`, 10, HUD_TOP + 4, '#f1c40f', 1);
+    px(ctx, 4, HUD_TOP + 13, 4, 4, '#54a0ff');
+    drawPixelText(ctx, `MANA: ${this.mana}`, 10, HUD_TOP + 12, '#54a0ff', 1);
 
-    // 2. Nút chuyển làn chiến thuật
+    // 2. Nút chuyển làn chiến thuật viền nổi
     for (let i = 0; i < 3; i++) {
       const ly = HUD_TOP + 20 + i * 7;
       const isCurrent = this.selectedLane === i;
-      px(ctx, 4, ly, 52, 6, isCurrent ? '#3a76e8' : '#1e1c2e');
-      px(ctx, 4, ly, 52, 1, isCurrent ? '#8ab4ff' : '#2d2745');
+      px(ctx, 4, ly, 54, 6, isCurrent ? '#2e86de' : '#1e1c2e');
+      px(ctx, 4, ly, 54, 1, isCurrent ? '#54a0ff' : '#2d2745');
+      px(ctx, 4, ly + 5, 54, 1, isCurrent ? '#12549e' : '#0d0a14');
       drawPixelText(ctx, `${i + 1}.${LANE_NAMES[i]}`, 6, ly + 1, isCurrent ? '#ffffff' : '#8884a0', 1);
     }
 
-    // 3. 7 Thẻ chiêu mộ Binh Chủng
+    // 3. 7 Thẻ chiêu mộ Binh Chủng viền kim loại có màu phân loại
     for (let i = 0; i < 7; i++) {
       const u = UNIT_DEFINITIONS[i];
       const sx = HUD_UNIT_START_X + i * (HUD_SLOT_W + 1);
       const canAfford = this.gold >= u.cost;
 
-      // Khung thẻ
-      px(ctx, sx, HUD_TOP + 3, HUD_SLOT_W, 35, canAfford ? '#201d36' : '#151322');
-      px(ctx, sx, HUD_TOP + 3, HUD_SLOT_W, 1, canAfford ? '#433d6b' : '#201d36');
-      px(ctx, sx, HUD_TOP + 37, HUD_SLOT_W, 1, '#090810');
+      // Nền thẻ bài có màu chủ đạo của binh chủng
+      px(ctx, sx, HUD_TOP + 3, HUD_SLOT_W, 35, canAfford ? '#1f1b33' : '#141221');
+      px(ctx, sx, HUD_TOP + 3, HUD_SLOT_W, 2, canAfford ? u.badgeCol : '#3d3752');
+      px(ctx, sx, HUD_TOP + 37, HUD_SLOT_W, 1, '#08060f');
+      px(ctx, sx, HUD_TOP + 3, 1, 35, canAfford ? '#6b5416' : '#211d33');
+      px(ctx, sx + HUD_SLOT_W - 1, HUD_TOP + 3, 1, 35, canAfford ? '#6b5416' : '#211d33');
 
-      // Phím tắt
-      drawPixelText(ctx, `[${i + 1}]`, sx + 2, HUD_TOP + 5, '#fed330', 1);
+      // Phím tắt nổi bật
+      drawPixelText(ctx, `[${i + 1}]`, sx + 2, HUD_TOP + 6, canAfford ? '#f1c40f' : '#636e72', 1);
 
-      // Icon lính
+      // Icon binh chủng
       const spr = getSprite(u.id, 'player', false);
       ctx.drawImage(spr, Math.round(sx + HUD_SLOT_W / 2 - spr.width / 2), HUD_TOP + 13);
 
       // Giá vàng
-      drawPixelText(ctx, `${u.cost}G`, sx + HUD_SLOT_W / 2, HUD_TOP + 29, canAfford ? '#ffffff' : '#ff6b6b', 1, 'c');
+      drawPixelText(ctx, `${u.cost}G`, sx + HUD_SLOT_W / 2, HUD_TOP + 29, canAfford ? '#ffffff' : '#ff7675', 1, 'c');
     }
 
     // 4. 3 Ô Kỹ năng chỉ huy (Spells)
@@ -1220,20 +1314,17 @@ class PixelKingdomEngine {
       const cd = this.spellCooldowns[i];
       const canCast = this.mana >= sp.mana && cd <= 0;
 
-      px(ctx, sx, HUD_TOP + 3, HUD_SPELL_SLOT_W, 35, canCast ? '#1b2944' : '#121826');
-      px(ctx, sx, HUD_TOP + 3, HUD_SPELL_SLOT_W, 1, canCast ? '#34528a' : '#1b2944');
+      px(ctx, sx, HUD_TOP + 3, HUD_SPELL_SLOT_W, 35, canCast ? '#162b47' : '#0f1a2b');
+      px(ctx, sx, HUD_TOP + 3, HUD_SPELL_SLOT_W, 2, canCast ? '#0984e3' : '#1e3799');
+      px(ctx, sx, HUD_TOP + 37, HUD_SPELL_SLOT_W, 1, '#08060f');
 
-      // Phím tắt
-      drawPixelText(ctx, `[${sp.key}]`, sx + 2, HUD_TOP + 5, '#4fc3f7', 1);
+      drawPixelText(ctx, `[${sp.key}]`, sx + 2, HUD_TOP + 6, '#54a0ff', 1);
+      drawPixelText(ctx, sp.name.substring(0, 3), sx + HUD_SPELL_SLOT_W / 2, HUD_TOP + 16, '#ffffff', 1, 'c');
 
-      // Tên phép
-      drawPixelText(ctx, sp.name.substring(0, 3), sx + HUD_SPELL_SLOT_W / 2, HUD_TOP + 15, '#ffffff', 1, 'c');
-
-      // Cooldown / Năng lượng
       if (cd > 0) {
-        drawPixelText(ctx, `${Math.ceil(cd)}S`, sx + HUD_SPELL_SLOT_W / 2, HUD_TOP + 27, '#ff4757', 1, 'c');
+        drawPixelText(ctx, `${Math.ceil(cd)}S`, sx + HUD_SPELL_SLOT_W / 2, HUD_TOP + 28, '#ee5253', 1, 'c');
       } else {
-        drawPixelText(ctx, `${sp.mana}M`, sx + HUD_SPELL_SLOT_W / 2, HUD_TOP + 27, canCast ? '#4fc3f7' : '#777777', 1, 'c');
+        drawPixelText(ctx, `${sp.mana}M`, sx + HUD_SPELL_SLOT_W / 2, HUD_TOP + 28, canCast ? '#54a0ff' : '#636e72', 1, 'c');
       }
     }
   }
@@ -1249,7 +1340,7 @@ class PixelKingdomEngine {
   }
 }
 
-// ---------- 10. KHỞI TẠO GAME KHI TẢI TRANG ----------
+// ---------- 10. KHỞI TẠO KHI TẢI TRANG ----------
 window.addEventListener('load', () => {
   const canvas = document.getElementById('game');
   new PixelKingdomEngine(canvas);
